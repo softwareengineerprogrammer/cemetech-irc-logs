@@ -1,1 +1,10 @@
-Requires psycopg2 - http://initd.org/psycopg/
+Prerequsites:
+* psycopg2 - http://initd.org/psycopg/
+* postgres database
+
+To run:
+* Execute create_messages_table.sql on database (TODO: do this automatically in logs.py)
+* Specify database configuration in db_config.py
+* Create logs directory in same directory as script.
+* Put log files in logs directory, with filename format YYYY-MM-DD_cemetech, i.e. 2012-11-06_cemetech
+* Run logs.py

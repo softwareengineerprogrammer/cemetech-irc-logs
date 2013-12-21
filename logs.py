@@ -1,12 +1,12 @@
+import os
+import psycopg2
+import re
+import db_config
+
 IRC_USER_MESSAGE = 'irc_user_message'
 CHANNEL_NOTIFICATION = 'channel_notification'
 SAXJAX_NOTIFICATION = 'saxjax_notification'
 SAXJAX_USER_MESSAGE = 'saxjax_user_message'
-
-__author__ = 'jonathan'
-import os
-import psycopg2
-import re
 
 time_pattern = re.compile( "[0-9]{2}:[0-9]{2}:[0-9]{2}")
 irc_user_pattern = re.compile("(?<=\<).*?(?=\>)")
@@ -14,11 +14,8 @@ saxjax_user_message_user_pattern = re.compile("(?<=\(C\)\s\[).*?(?=\])")
 saxjax_notification_user_pattern = re.compile("(?<=\(C\)\s\*).*?(?=\s)")
 channel_notification_user_pattern = re.compile("(?<=\s\*\*).*?(?=\s)")
 
-#for log in os.listdir("./logs"):
-#    print log
-
 def getDate(filename):
-    return filename.replace('_cemetech', '')
+    return filename.replace('logs/',"").replace('_cemetech', '')
 
 def getTime(line):
     try:
@@ -75,20 +72,40 @@ def getMessage(line):
 
     return line.replace(prefix,"")
 
+def getInsertSql(filename, line):
+    sql = "INSERT INTO message (m_time, m_type, m_sender, m_message) VALUES ( %s, %s, %s, %s )"
+
+    timestamp = getDate(filename + " " + getTime(line))
+    data = (timestamp, getType(line), getUser(line), getMessage(line))
+
+    return [sql, data]
+
+CONN = psycopg2.connect(host=db_config.ENDPOINT, port=db_config.PORT, user=db_config.USER, password=db_config.PASSWORD, database=db_config.DB)
+
+def executeInsert( sql, data ):
+    cur = CONN.cursor();
+    cur.execute(sql, data)
+    CONN.commit()
+    cur.close()
 
 
+for filename in os.listdir("./logs"):
+    f = open('./logs/'+filename)
+    for line in f:
+        line = line.replace("\n","")
 
+        if line is None or line is '':
+            pass
+        else:
+            print line
+            print '\t', getTime(line)
+            print '\t', getType(line)
+            print '\t', getUser(line)
+            print '\t', getMessage(line)
 
-f = open('logs/2012-11-05_cemetech')
-for line in f:
-    line = line.replace("\n","")
+            sql = getInsertSql(filename, line)
+            print '\t', sql
+            executeInsert(sql[0], sql[1])
 
-    if line is None or line is '':
-        pass
-    else:
-        print line
-        print '\t', getTime(line)
-        print '\t', getType(line)
-        print '\t', getUser(line)
-        print '\t', getMessage(line)
+CONN.close()
 

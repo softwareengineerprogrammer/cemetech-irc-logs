@@ -1,5 +1,7 @@
+# Update with your own values
 ENDPOINT="ENDPOINT"
 PORT=5432
 USER="USER"
 PASSWORD="PASSWORD"
+DB="DB"
 
